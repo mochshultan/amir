@@ -1,0 +1,32 @@
+motor_driver:
+  ros__parameters:
+    port: "/dev/ttyS1"
+    baudrate: 9600
+
+    max_rpm: 300.0
+    enable_on_startup: true
+    publish_rate_hz: 20.0
+    cmd_timeout_sec: 1.0
+    accel_rate_rpm_per_s: 500.0
+
+    # Legacy invert flags (still supported).
+    invert_left: true
+    invert_right: false
+
+    # New split flags:
+    # - *_cmd  : sign correction for cmd_vel -> motor RPM
+    # - *_odom : sign correction for encoder delta -> odometry
+    invert_left_cmd: true
+    invert_right_cmd: false
+    invert_left_odom: true
+    invert_right_odom: false
+
+    # Geometri robot YMPI
+    wheel_radius: 0.1016
+    wheel_separation: 0.293
+    counts_per_rev: 16384
+
+    # Geometri robot AWG
+    # wheel_radius: 0.065
+    # wheel_separation: 0.3118
+    # counts_per_rev: 4096

@@ -1,0 +1,19 @@
+waveshare_modbus_io:
+  ros__parameters:
+    port: "/dev/ttyS3"
+    baudrate: 9600
+    parity: "N"
+    stopbits: 1
+    bytesize: 8
+    slave_id: 1
+    poll_rate_hz: 10.0
+    publish_outputs: true
+    debounce_ms: 20
+    reconnect_sec: 2.0
+
+    # Mapping nama DI/DO (ganti sesuai panel AMR Anda)
+    di_names: ["E_STOP", "LIMIT_L", "LIMIT_R", "DOCK_IN", "DOCK_OK", "BUMP_L", "BUMP_R", "SPARE"]
+    do_names: ["BUZZER", "BEACON", "BRAKE", "LIFT", "DOCK_OUT", "FAN", "AUX1", "AUX2"]
+
+    # Map DO validasi 6 3 26
+    # 1=kuning front , 2=rear yellow, 3=unknwn, 4=motor driver, 5=liftFr, 6=bzzr, 7=liftRr, 8=unknwn

@@ -1,0 +1,5 @@
+uint8 channel      # 1..8
+string cmd         # "on" | "off" | "toggle"
+---
+bool success
+string message
