@@ -1,0 +1,12 @@
+twist_mux:
+  ros__parameters:
+    use_sim_time: false
+    topics:
+      auto:
+        topic: /cmd_vel_auto
+        timeout: 0.6
+        priority: 20
+      manual:
+        topic: /cmd_vel_manual
+        timeout: 0.25
+        priority: 100

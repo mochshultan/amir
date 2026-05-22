@@ -23,7 +23,7 @@ class MotorNode(Node):
         # === Declare all parameters ===
         self.declare_parameter('port', '/dev/ttyS1')
         self.declare_parameter('baudrate', 9600)
-        self.declare_parameter('wheel_radius', 0.1016)
+        self.declare_parameter('wheel_radius', 0.1015) #1016
         self.declare_parameter('wheel_separation', 0.293)
         self.declare_parameter('counts_per_rev', 16384)
         self.declare_parameter('invert_left', True)
@@ -32,12 +32,19 @@ class MotorNode(Node):
         self.declare_parameter('max_rpm', 300.0)
         self.declare_parameter('accel_rate_rpm_per_s', 500.0)
         self.declare_parameter('publish_rate_hz', 50.0)
+        self.declare_parameter('control_rate_hz', 50.0)
         self.declare_parameter('cmd_timeout_sec', 1.0)
+        self.declare_parameter('deadband_compensation_enabled', False)
+        self.declare_parameter('linear_min_cmd_mps', 0.0)
+        self.declare_parameter('angular_min_cmd_radps', 0.0)
+        self.declare_parameter('linear_zero_epsilon_mps', 0.0)
+        self.declare_parameter('angular_zero_epsilon_radps', 0.0)
 
         # === Load parameter values ===
         self.port = str(self.get_parameter('port').value)
         self.baud = int(self.get_parameter('baudrate').value)
         self.r = float(self.get_parameter('wheel_radius').value)
+        self.bias = float(-0.000)
         self.L = float(self.get_parameter('wheel_separation').value)
         self.cpr = int(self.get_parameter('counts_per_rev').value)
         legacy_inv_l = bool(self.get_parameter('invert_left').value)
@@ -57,8 +64,14 @@ class MotorNode(Node):
         self.max_rpm = float(self.get_parameter('max_rpm').value)
         self.accel_rate = float(self.get_parameter('accel_rate_rpm_per_s').value)
         self.enable_on_startup = bool(self.get_parameter('enable_on_startup').value)
-        self.publish_rate = float(self.get_parameter('publish_rate_hz').value)
+        self.publish_rate = max(1.0, float(self.get_parameter('publish_rate_hz').value))
+        self.control_rate = max(1.0, float(self.get_parameter('control_rate_hz').value))
         self.cmd_timeout = float(self.get_parameter('cmd_timeout_sec').value)
+        self.deadband_comp_enabled = bool(self.get_parameter('deadband_compensation_enabled').value)
+        self.linear_min_cmd = max(0.0, float(self.get_parameter('linear_min_cmd_mps').value))
+        self.angular_min_cmd = max(0.0, float(self.get_parameter('angular_min_cmd_radps').value))
+        self.linear_zero_epsilon = max(0.0, float(self.get_parameter('linear_zero_epsilon_mps').value))
+        self.angular_zero_epsilon = max(0.0, float(self.get_parameter('angular_zero_epsilon_radps').value))
 
         # === Driver setup ===
         self.driver = ZLACDriver(port=self.port, baudrate=self.baud)
@@ -74,6 +87,8 @@ class MotorNode(Node):
         self.target_rpm_r = 0.0
         self.x = self.y = self.th = 0.0
         self.last_L = self.last_R = None
+        self.last_vbus = 0.0
+        self.last_vbus_time = 0.0
 
         # === ROS publishers/subscribers ===
         qos = QoSProfile(depth=10)
@@ -85,7 +100,7 @@ class MotorNode(Node):
 
         # === Timers ===
         self.create_timer(1.0 / self.publish_rate, self.update_feedback)
-        self.create_timer(0.05, self.control_loop)
+        self.create_timer(1.0 / self.control_rate, self.control_loop)
         self.last_debug = time.time()
 
         self.get_logger().info(
@@ -93,12 +108,28 @@ class MotorNode(Node):
             f"inv_cmd(L/R)={self.inv_l_cmd}/{self.inv_r_cmd} | "
             f"inv_odom(L/R)={self.inv_l_odom}/{self.inv_r_odom}"
         )
+        self.get_logger().info(
+            f"[MotorNode] deadband compensation={self.deadband_comp_enabled} | "
+            f"linear_min={self.linear_min_cmd:.3f} m/s | angular_min={self.angular_min_cmd:.3f} rad/s | "
+            f"eps linear/angular={self.linear_zero_epsilon:.3f}/{self.angular_zero_epsilon:.3f}"
+        )
+        self.get_logger().info(
+            f"[MotorNode] rates | control={self.control_rate:.1f} Hz | feedback={self.publish_rate:.1f} Hz"
+        )
 
     # === Velocity command callback ===
     def cb_cmd_vel(self, msg: Twist):
-        v = msg.linear.x
-        w = msg.angular.z
-        v_l = (v - w * self.L / 2.0) / self.r
+        v = self.compensate_deadband(
+            msg.linear.x,
+            self.linear_min_cmd,
+            self.linear_zero_epsilon
+        )
+        w = self.compensate_deadband(
+            msg.angular.z,
+            self.angular_min_cmd,
+            self.angular_zero_epsilon
+        )
+        v_l = (v - w * self.L / 2.0) / (self.r-self.bias)
         v_r = (v + w * self.L / 2.0) / self.r
         rpm_l = v_l * 60 / (2 * math.pi)
         rpm_r = v_r * 60 / (2 * math.pi)
@@ -124,7 +155,7 @@ class MotorNode(Node):
             self.target_rpm_r = 0.0
 
         # Akselerasi halus ke target
-        step = self.accel_rate * 0.05  # 50ms loop
+        step = self.accel_rate / self.control_rate
         def smooth(curr, target):
             if abs(target - curr) < step:
                 return target
@@ -148,13 +179,12 @@ class MotorNode(Node):
     # === Feedback loop ===
     def update_feedback(self):
         try:
-            pos_L = self.driver.read_registers(REG_POS_L_HI, 2)
-            pos_R = self.driver.read_registers(REG_POS_R_HI, 2)
-            if not pos_L or not pos_R:
+            feedback = self.driver.read_feedback_core()
+            if feedback is None:
                 return
 
-            enc_L = i32(pos_L[0], pos_L[1])
-            enc_R = i32(pos_R[0], pos_R[1])
+            enc_L = i32(feedback["enc_l_hi"], feedback["enc_l_lo"])
+            enc_R = i32(feedback["enc_r_hi"], feedback["enc_r_lo"])
             if self.last_L is None:
                 self.last_L, self.last_R = enc_L, enc_R
                 return
@@ -166,7 +196,7 @@ class MotorNode(Node):
             if self.inv_r_odom: dR = -dR
 
             # Odom calculation
-            dist_L = (dL / self.cpr) * (2 * math.pi * self.r)
+            dist_L = (dL / self.cpr) * (2 * math.pi * (self.r - self.bias))
             dist_R = (dR / self.cpr) * (2 * math.pi * self.r)
             dS = (dist_R + dist_L) / 2
             dTh = (dist_R - dist_L) / self.L
@@ -181,24 +211,28 @@ class MotorNode(Node):
             self.pub_odom.publish(odom)
 
             # Telemetry
-            vbus = self.driver.read_u16(REG_BUS_VOLT) or 0
-            torqL = self.driver.read_u16(REG_ACT_TORQUE_L) or 0
-            torqR = self.driver.read_u16(REG_ACT_TORQUE_R) or 0
-            temp = self.driver.read_u16(REG_DRIVER_TEMP) or 0
-            rpmL, rpmR = self.driver.read_actual_velocity() or (0, 0)
+            now = time.time()
+            if now - self.last_vbus_time > 1.0:
+                self.last_vbus = float(self.driver.read_u16(REG_BUS_VOLT) or 0) * 0.01
+                self.last_vbus_time = now
+
+            torqL = i16(feedback["torq_l_raw"])
+            torqR = i16(feedback["torq_r_raw"])
+            temp = i16(feedback["temp_raw"])
+            rpmL = i16(feedback["rpm_l_raw"]) / 10.0
+            rpmR = i16(feedback["rpm_r_raw"]) / 10.0
 
             tele = Float32MultiArray()
             tele.data = [
-                float(vbus) * 0.01,
-                float(i16(torqL)) * 0.1,
-                float(i16(torqR)) * 0.1,
-                float(i16(temp)) * 0.1,
+                self.last_vbus,
+                float(torqL) * 0.1,
+                float(torqR) * 0.1,
+                float(temp) * 0.1,
                 float(rpmL),
                 float(rpmR)
             ]
             self.pub_tele.publish(tele)
 
-            now = time.time()
             if now - self.last_debug > 1.0:
                 self.get_logger().info(
                     f"🔋 {tele.data[0]:.1f}V | Temp {tele.data[3]:.1f}°C | "
@@ -216,6 +250,17 @@ class MotorNode(Node):
         while angle < -math.pi:
             angle += 2 * math.pi
         return angle
+
+    def compensate_deadband(self, value, minimum, zero_epsilon):
+        if not self.deadband_comp_enabled:
+            return value
+        if abs(value) <= zero_epsilon:
+            return 0.0
+        if minimum <= 0.0:
+            return value
+        if abs(value) < minimum:
+            return math.copysign(minimum, value)
+        return value
 
 
 def main(args=None):
@@ -236,4 +281,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-

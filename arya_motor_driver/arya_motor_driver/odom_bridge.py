@@ -21,13 +21,12 @@ POSE_COV_PITCH  = 0.1    # pitch (unused in 2D)
 POSE_COV_YAW    = 0.03   # yaw noise (rad²)
 
 # Twist: [vx, vy, vz, wx, wy, wz]
-TWIST_COV_VX    = 0.015   # linear x velocity noise
+TWIST_COV_VX    = 0.01   # linear x velocity noise
 TWIST_COV_VY    = 0.02   # linear y velocity noise
 TWIST_COV_VZ    = 0.1
 TWIST_COV_WX    = 0.1
 TWIST_COV_WY    = 0.1
-TWIST_COV_WZ    = 0.015   # angular z velocity noise
-
+TWIST_COV_WZ    = 0.01
 
 def make_diagonal_covariance(d0, d1, d2, d3, d4, d5):
     """Build a 6x6 diagonal covariance matrix (row-major, 36 elements)."""
@@ -106,11 +105,11 @@ class OdomBridge(Node):
         # === TF broadcaster ===
         self.tf_broadcaster = TransformBroadcaster(self)
 
-        # === Timer publish setiap 0.05 s (20 Hz) ===
-        self.timer = self.create_timer(0.05, self.publish_odom)
+        # === Timer publish setiap 0.05 s (20 Hz) === 0.033 (30hz)
+        self.timer = self.create_timer(0.033, self.publish_odom)
 
         self.publish_count = 0
-        self.get_logger().info("✅ OdomBridge aktif — mempublikasikan /odom dan /tf @20 Hz")
+        self.get_logger().info("✅ OdomBridge aktif — mempublikasikan /odom dan /tf @30 Hz")
 
     # -------------------------------------------------
     # Callback data encoder dari microcontroller
@@ -236,7 +235,7 @@ class OdomBridge(Node):
         # self.tf_broadcaster.sendTransform(t)
 
         self.publish_count += 1
-        if self.publish_count % 20 == 0:
+        if self.publish_count % 30 == 0:
             self.get_logger().info(
                 f"📡 Odom — X:{self.x:.3f} Y:{self.y:.3f} "
                 f"θ:{math.degrees(self.th):.1f}° "

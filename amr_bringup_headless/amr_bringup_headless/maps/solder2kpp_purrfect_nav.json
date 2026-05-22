@@ -1,0 +1,256 @@
+{
+  "map_name": "solder2kpp_purrfect.yaml",
+  "updated_at": "2026-05-21T11:17:48+0700",
+  "zones": [
+    {
+      "id": "zone_mpez8vvs_y6yje",
+      "name": "Restriction 1",
+      "enabled": true,
+      "points": [
+        [
+          46.4402,
+          -10.5964
+        ],
+        [
+          45.5585,
+          -10.5964
+        ],
+        [
+          45.5585,
+          -9.963
+        ],
+        [
+          46.4402,
+          -9.963
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpez91js_maohp",
+      "name": "Restriction 2",
+      "enabled": true,
+      "points": [
+        [
+          30.5535,
+          -6.1621
+        ],
+        [
+          30.1823,
+          -6.1621
+        ],
+        [
+          30.1823,
+          -6.1621
+        ],
+        [
+          30.5535,
+          -6.1621
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpez9b9j_rup7o",
+      "name": "Restriction 3",
+      "enabled": true,
+      "points": [
+        [
+          30.569,
+          -6.2548
+        ],
+        [
+          12.826,
+          -6.2548
+        ],
+        [
+          12.826,
+          -7.1819
+        ],
+        [
+          30.569,
+          -7.1819
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpez9jwu_3y2xg",
+      "name": "Restriction 4",
+      "enabled": true,
+      "points": [
+        [
+          30.832,
+          -11.0909
+        ],
+        [
+          12.857,
+          -11.0909
+        ],
+        [
+          12.857,
+          -9.3759
+        ],
+        [
+          30.832,
+          -9.3759
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpez9w5h_jv34z",
+      "name": "Restriction 5",
+      "enabled": true,
+      "points": [
+        [
+          0.2033,
+          -3.9836
+        ],
+        [
+          6.7931,
+          -3.9836
+        ],
+        [
+          6.7931,
+          -8.0471
+        ],
+        [
+          0.2033,
+          -8.0471
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpeza5gw_ujnlp",
+      "name": "Restriction 6",
+      "enabled": true,
+      "points": [
+        [
+          -1.4983,
+          -1.048
+        ],
+        [
+          13.2901,
+          -1.048
+        ],
+        [
+          13.2901,
+          -2.593
+        ],
+        [
+          -1.4983,
+          -2.593
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpezaq6i_almmt",
+      "name": "Restriction 7",
+      "enabled": true,
+      "points": [
+        [
+          47.6067,
+          -7.6929
+        ],
+        [
+          68.6481,
+          -7.6929
+        ],
+        [
+          68.6481,
+          -8.6806
+        ],
+        [
+          47.6067,
+          -8.6806
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpezawp3_ne3o9",
+      "name": "Restriction 8",
+      "enabled": true,
+      "points": [
+        [
+          47.4917,
+          -11.3679
+        ],
+        [
+          68.8781,
+          -11.3679
+        ],
+        [
+          68.8781,
+          -10.564
+        ],
+        [
+          47.4917,
+          -10.564
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpezbik4_1r7so",
+      "name": "Restriction 9",
+      "enabled": true,
+      "points": [
+        [
+          74.2592,
+          -12.057
+        ],
+        [
+          94.0818,
+          -12.057
+        ],
+        [
+          94.0818,
+          -13.1365
+        ],
+        [
+          74.2592,
+          -13.1365
+        ]
+      ]
+    },
+    {
+      "id": "zone_mpezbnox_96k6l",
+      "name": "Restriction 10",
+      "enabled": true,
+      "points": [
+        [
+          93.6909,
+          -9.6223
+        ],
+        [
+          73.8682,
+          -9.6223
+        ],
+        [
+          73.8682,
+          -8.6576
+        ],
+        [
+          93.6909,
+          -8.6576
+        ]
+      ]
+    }
+  ],
+  "stations": [
+    {
+      "id": "station_mpezclho_swfjn",
+      "name": "Station KPP",
+      "x": 105.38,
+      "y": -10.09,
+      "theta": 0.109956,
+      "wait_sec": 0.0,
+      "enabled": true
+    },
+    {
+      "id": "station_mpezczar_yqa1c",
+      "name": "Station SOLDER",
+      "x": -33.33,
+      "y": -16.08,
+      "theta": 3.12763,
+      "wait_sec": 0.0,
+      "enabled": true
+    }
+  ]
+}

@@ -1,13 +1,23 @@
 motor_driver:
   ros__parameters:
     port: "/dev/ttyS1"
-    baudrate: 9600
+    baudrate: 38400
 
     max_rpm: 300.0
     enable_on_startup: true
-    publish_rate_hz: 20.0
-    cmd_timeout_sec: 1.0
-    accel_rate_rpm_per_s: 500.0
+    publish_rate_hz: 50.0
+    control_rate_hz: 50.0
+    cmd_timeout_sec: 0.5
+    accel_rate_rpm_per_s: 800.0
+
+    # Kompensasi deadband motor:
+    # command kecil yang masih valid akan dinaikkan ke nilai minimum ini,
+    # sedangkan command nol/noise kecil tetap dibuat nol.
+    deadband_compensation_enabled: true
+    linear_min_cmd_mps: 0.2
+    angular_min_cmd_radps: 0.15
+    linear_zero_epsilon_mps: 0.02
+    angular_zero_epsilon_radps: 0.03
 
     # Legacy invert flags (still supported).
     invert_left: true

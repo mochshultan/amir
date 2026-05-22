@@ -1,0 +1,6 @@
+# Arya AMR stable serial aliases.
+# Lidar uses CP2102N, IMU uses CP2102. Do not match only by VID:PID because
+# both devices can appear as Silicon Labs 10c4:ea60.
+
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{product}=="CP2102N USB to UART Bridge Controller", MODE:="0666", GROUP:="dialout", SYMLINK+="lidar", SYMLINK+="rplidar"
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{product}=="CP2102 USB to UART Bridge Controller", MODE:="0666", GROUP:="dialout", SYMLINK+="imu"

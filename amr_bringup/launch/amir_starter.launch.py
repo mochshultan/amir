@@ -4,8 +4,10 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from ament_index_python.packages import get_package_share_directory
 import os
+import glob
 
 # ros2 launch arya_web_interface web_interface_bringup.launch.py \
 #  //imu_port:=/dev/ttyUSB1 \
@@ -25,9 +27,11 @@ def generate_launch_description():
     enable_ekf = LaunchConfiguration('enable_ekf')
     enable_web = LaunchConfiguration('enable_web')
     enable_lidar_rviz = LaunchConfiguration('enable_lidar_rviz')
+    lidar_auto_start = LaunchConfiguration('lidar_auto_start')
 
     imu_delay = LaunchConfiguration('imu_delay')
     lidar_delay = LaunchConfiguration('lidar_delay')
+    lidar_motor_start_delay = LaunchConfiguration('lidar_motor_start_delay')
     motor_delay = LaunchConfiguration('motor_delay')
     odom_bridge_delay = LaunchConfiguration('odom_bridge_delay')
     ekf_delay = LaunchConfiguration('ekf_delay')
@@ -74,18 +78,140 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            'serial_port': lidar_port
+            'serial_port': lidar_port,
+            'auto_start': lidar_auto_start,
+            'motor_start_delay': lidar_motor_start_delay
         }.items(),
         condition=IfCondition(enable_lidar)
     )
+
+    # =========================
+    # Helper: Auto-detect USB serial ports by Silicon Labs bridge model
+    # =========================
+    # Both devices are Silicon Labs CP210x (often same VID:PID), so use the
+    # product string too: Lidar=CP2102N, IMU=CP2102.
+    SILABS_VID_PIDS = {'10c4:ea60'}
+    LIDAR_PRODUCTS = {'cp2102n usb to uart bridge controller'}
+    IMU_PRODUCTS = {'cp2102 usb to uart bridge controller'}
+
+    def _read_sys_attr(sys_path, name):
+        fpath = os.path.join(sys_path, name)
+        if not os.path.isfile(fpath):
+            return None
+        with open(fpath) as f:
+            return f.read().strip()
+
+    def _norm(value):
+        return (value or '').strip().lower()
+
+    def _get_usb_attrs(tty_sys_path):
+        """Read USB attributes from sysfs for ttyUSBx/ttyACMx."""
+        device_link = os.path.join(tty_sys_path, 'device')
+        if not os.path.exists(device_link):
+            return None
+        real = os.path.realpath(device_link)
+        for _ in range(6):
+            vid = _read_sys_attr(real, 'idVendor')
+            pid = _read_sys_attr(real, 'idProduct')
+            if vid and pid:
+                return {
+                    'vid_pid': f"{vid}:{pid}",
+                    'product': _read_sys_attr(real, 'product') or '',
+                    'manufacturer': _read_sys_attr(real, 'manufacturer') or '',
+                    'serial': _read_sys_attr(real, 'serial') or '',
+                }
+            real = os.path.dirname(real)
+            if real == '/':
+                break
+        return None
+
+    def _attrs_for_dev(dev_path):
+        real_dev = os.path.realpath(dev_path)
+        tty_name = os.path.basename(real_dev)
+        if not tty_name:
+            return None
+        return _get_usb_attrs(os.path.join('/sys/class/tty', tty_name))
+
+    def _is_lidar(attrs):
+        if not attrs or attrs.get('vid_pid') not in SILABS_VID_PIDS:
+            return False
+        product = _norm(attrs.get('product'))
+        return product in LIDAR_PRODUCTS or 'cp2102n' in product
+
+    def _is_imu(attrs):
+        if not attrs or attrs.get('vid_pid') not in SILABS_VID_PIDS:
+            return False
+        product = _norm(attrs.get('product'))
+        return product in IMU_PRODUCTS or ('cp2102' in product and 'cp2102n' not in product)
+
+    def _describe_attrs(attrs):
+        if not attrs:
+            return 'unknown'
+        return (
+            f"VID:PID={attrs.get('vid_pid', 'unknown')} "
+            f"product='{attrs.get('product', '')}' "
+            f"serial='{attrs.get('serial', '')}'"
+        )
+
+    def auto_detect_ports():
+        """
+        Deteksi otomatis port IMU dan Lidar.
+        Prioritas: valid udev symlink -> CP210x product scan -> fallback.
+        """
+        imu_port = None
+        lidar_port = None
+
+        # Prioritas 1: Udev symlink, but verify it points to the expected chip.
+        if os.path.exists('/dev/imu'):
+            attrs = _attrs_for_dev('/dev/imu')
+            if _is_imu(attrs):
+                imu_port = '/dev/imu'
+            else:
+                print(f"[auto_detect] Abaikan /dev/imu: {_describe_attrs(attrs)}")
+        if os.path.exists('/dev/lidar'):
+            attrs = _attrs_for_dev('/dev/lidar')
+            if _is_lidar(attrs):
+                lidar_port = '/dev/lidar'
+            else:
+                print(f"[auto_detect] Abaikan /dev/lidar: {_describe_attrs(attrs)}")
+        if imu_port and lidar_port:
+            print(f'[auto_detect] Menggunakan udev symlinks: IMU={imu_port}, Lidar={lidar_port}')
+            return imu_port, lidar_port
+
+        # Prioritas 2: Scan ttyUSB/ttyACM ports by product string.
+        tty_paths = sorted(glob.glob('/sys/class/tty/ttyUSB*') + glob.glob('/sys/class/tty/ttyACM*'))
+        for tty_path in tty_paths:
+            name = os.path.basename(tty_path)
+            dev = f'/dev/{name}'
+            attrs = _get_usb_attrs(tty_path)
+            if attrs is None:
+                continue
+            print(f"[auto_detect] Ditemukan {dev}: {_describe_attrs(attrs)}")
+            if _is_lidar(attrs) and lidar_port is None:
+                lidar_port = dev
+            elif _is_imu(attrs) and imu_port is None:
+                imu_port = dev
+
+        # Fallback jika product string tidak cocok/tersedia.
+        if imu_port is None:
+            imu_port = '/dev/ttyUSB1'
+            print(f'[auto_detect] IMU tidak terdeteksi via CP210x product, fallback: {imu_port}')
+        if lidar_port is None:
+            lidar_port = '/dev/ttyUSB0'
+            print(f'[auto_detect] Lidar tidak terdeteksi via CP210x product, fallback: {lidar_port}')
+
+        print(f'[auto_detect] Hasil: IMU={imu_port}, Lidar={lidar_port}')
+        return imu_port, lidar_port
+
+    detected_imu_port, detected_lidar_port = auto_detect_ports()
 
     return LaunchDescription([
 
         # =========================
         # Launch Arguments
         # =========================
-        DeclareLaunchArgument('imu_port', default_value='/dev/ttyUSB0'),
-        DeclareLaunchArgument('lidar_port', default_value='/dev/ttyUSB1'),
+        DeclareLaunchArgument('imu_port', default_value=detected_imu_port),
+        DeclareLaunchArgument('lidar_port', default_value=detected_lidar_port),
         DeclareLaunchArgument(
             'ekf_config',
             default_value=os.path.expanduser('~/arya_ws/src/amr_bringup/config/ekf.yaml')
@@ -96,9 +222,11 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_ekf', default_value='true'),
         DeclareLaunchArgument('enable_web', default_value='true'),
         DeclareLaunchArgument('enable_lidar_rviz', default_value='false'),
+        DeclareLaunchArgument('lidar_auto_start', default_value='true'),
 
         DeclareLaunchArgument('imu_delay', default_value='0.0'),
         DeclareLaunchArgument('lidar_delay', default_value='0.5'),
+        DeclareLaunchArgument('lidar_motor_start_delay', default_value='8.0'),
         DeclareLaunchArgument('motor_delay', default_value='1.0'),
         DeclareLaunchArgument('odom_bridge_delay', default_value='1.5'),
         DeclareLaunchArgument('ekf_delay', default_value='2.5'),
@@ -130,6 +258,7 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True
         ),
+
 
         # =========================
         # 2. IMU
@@ -266,6 +395,7 @@ def generate_launch_description():
                         'imu_serial_port': imu_port,
                         'imu_serial_baud': 921600,
                         'ekf_config': ekf_config,
+                        'lidar_motor_enabled': ParameterValue(lidar_auto_start, value_type=bool),
                     }],
                     condition=IfCondition(enable_web)
                 )

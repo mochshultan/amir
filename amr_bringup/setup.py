@@ -19,6 +19,8 @@ setup(
         (os.path.join('share', package_name, 'maps'), glob('maps/*')),
         # Include rviz configs
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
+        # Include udev rules templates
+        (os.path.join('share', package_name, 'udev'), glob('udev/*.rules')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

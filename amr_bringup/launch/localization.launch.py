@@ -119,7 +119,16 @@ def generate_launch_description():
             executable='amcl',
             name='amcl',
             output='screen',
-            parameters=[params_file]
+            parameters=[
+                params_file,
+                {
+                    'set_initial_pose': True,
+                    'initial_pose.x': 0.0,
+                    'initial_pose.y': 0.0,
+                    'initial_pose.z': 0.0,
+                    'initial_pose.yaw': 0.0,
+                }
+            ]
         ),
 
         Node(

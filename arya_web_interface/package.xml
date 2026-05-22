@@ -13,10 +13,15 @@
   <test_depend>python3-pytest</test_depend>
 
   <depend>rclpy</depend>
+  <depend>action_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>nav2_msgs</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_msgs</depend>
 
   <exec_depend>python3-fastapi</exec_depend>
   <exec_depend>robot_localization</exec_depend>
