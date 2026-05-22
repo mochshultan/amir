@@ -345,7 +345,7 @@ controller_server:
       # 1. Arti: Deviasi standar acak sampling kecepatan rotasi (Theta/Yaw).
       # 2. Dampak: Naik: Tebakan rute menyebar luas kiri/kanan. Turun: Hanya cenderung jalan lurus ke depan.
       # 3. Range: 0.1 - 1.00
-      wz_std: 0.15
+      wz_std: 0.175
 
       # 1. Arti: Batas absolut kecepatan maju teratas.
       # 2. Dampak: Naik: Robot diizinkan jalan sangat ngebut.

@@ -1,0 +1,205 @@
+/* Responsive design breakpoints */
+
+@media (max-width: 1024px) {
+  .dashboard-grid,
+  .diagnostics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --hh: 48px;
+    --sw: 160px;
+  }
+  
+  .content-area {
+    padding: 16px;
+  }
+  
+  .dashboard-grid,
+  .diagnostics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .hdr-brand {
+    gap: 8px;
+    padding: 0 12px 0 8px;
+  }
+  
+  .brand-gem {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .brand-title {
+    font-size: 0.9rem;
+  }
+  
+  .brand-subtitle {
+    display: none;
+  }
+  
+  .alerts-container {
+    max-width: calc(100vw - 32px);
+    left: 16px;
+    right: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    font-size: 13px;
+  }
+  
+  .hmi-header {
+    height: 44px;
+  }
+  
+  .hdr-brand {
+    padding: 0 8px;
+  }
+  
+  .brand-gem {
+    width: 28px;
+    height: 28px;
+    font-size: 0.6rem;
+  }
+  
+  .brand-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  
+  .hdr-status {
+    padding-right: 8px;
+    gap: 4px;
+  }
+  
+  .status-label {
+    display: none;
+  }
+  
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.25rem; }
+  h3 { font-size: 1.1rem; }
+  
+  button {
+    padding: 6px 12px;
+    min-height: 32px;
+    font-size: 0.9rem;
+  }
+  
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    padding: 6px 10px;
+    min-height: 32px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .content-area {
+    padding: 12px;
+  }
+  
+  .section-title {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    font-size: 1.2rem;
+  }
+  
+  .alerts-container {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+  }
+  
+  .alert {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    width: var(--scw);
+  }
+  
+  .hdr-brand {
+    gap: 6px;
+  }
+  
+  .brand-subtitle {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: 8px 12px;
+  }
+}
+
+/* Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-grid,
+  .diagnostics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+  .dashboard-grid,
+  .diagnostics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* High DPI displays */
+@media (min-device-pixel-ratio: 2) {
+  button,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .hmi-header,
+  .sidebar,
+  .hdr-menu {
+    display: none;
+  }
+  
+  .content-area {
+    padding: 0;
+    background: white;
+  }
+  
+  .alerts-container {
+    display: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .nav-item,
+  a {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px;
+  }
+  
+  a {
+    padding: 8px 12px;
+  }
+}

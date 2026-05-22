@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ARYA AMR Web Control Panel - WCAG 2.1 AA Compliant">
+    <title>ARYA AMR Control — YMPI 2.0</title>
+    
+    <!-- Design Tokens and Base Styles -->
+    <link rel="stylesheet" href="/static/css/design-tokens.css">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/layout.css">
+    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body>
+    <!-- Main Application Container -->
+    <div id="app" class="app-container" role="application" aria-label="ARYA AMR Control Interface">
+        
+        <!-- Header with Branding and Status -->
+        <header class="hmi-header" role="banner">
+            <button id="btn-menu" class="hdr-menu" aria-label="Toggle navigation menu" aria-controls="sidebar">
+                <span aria-hidden="true">☰</span>
+            </button>
+            
+            <div class="hdr-brand">
+                <div class="brand-gem" aria-hidden="true">⬡</div>
+                <div>
+                    <h1 class="brand-title">ARYA AMR</h1>
+                    <p class="brand-subtitle">Web Control Panel</p>
+                </div>
+            </div>
+            
+            <div class="hdr-status" aria-live="polite" aria-atomic="true">
+                <span id="status-indicator" class="status-led"></span>
+                <span id="status-text" class="status-label">Connecting...</span>
+            </div>
+        </header>
+        
+        <!-- Main Content Area -->
+        <div class="hmi-main">
+            <!-- Sidebar Navigation -->
+            <nav id="sidebar" class="sidebar" role="navigation" aria-label="Main Navigation">
+                <ul class="sidebar-menu">
+                    <li><a href="#dashboard" class="nav-item active" aria-current="page" data-section="dashboard">Dashboard</a></li>
+                    <li><a href="#map" class="nav-item" data-section="map">Map & Navigation</a></li>
+                    <li><a href="#control" class="nav-item" data-section="control">Drive Control</a></li>
+                    <li><a href="#diagnostics" class="nav-item" data-section="diagnostics">Diagnostics</a></li>
+                    <li><a href="#settings" class="nav-item" data-section="settings">Settings</a></li>
+                </ul>
+            </nav>
+            
+            <!-- Content Sections -->
+            <main class="content-area" role="main">
+                
+                <!-- Dashboard Section -->
+                <section id="section-dashboard" class="content-section active" role="region" aria-labelledby="heading-dashboard">
+                    <h2 id="heading-dashboard" class="section-title">Dashboard</h2>
+                    <div id="dashboard-content" class="dashboard-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </section>
+                
+                <!-- Map Section -->
+                <section id="section-map" class="content-section" role="region" aria-labelledby="heading-map">
+                    <h2 id="heading-map" class="section-title">Map & Navigation</h2>
+                    <div class="map-container">
+                        <canvas id="canvas-map" class="map-canvas" role="img" aria-label="Map visualization"></canvas>
+                        <div id="map-controls" class="map-controls">
+                            <button id="btn-set-goal" class="btn btn-primary" aria-label="Set navigation goal">Set Goal</button>
+                            <button id="btn-cancel-goal" class="btn btn-secondary" aria-label="Cancel current goal">Cancel Goal</button>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Control Section -->
+                <section id="section-control" class="content-section" role="region" aria-labelledby="heading-control">
+                    <h2 id="heading-control" class="section-title">Drive Control</h2>
+                    <div class="control-panel">
+                        <div class="control-group">
+                            <label for="mode-selector">Drive Mode:</label>
+                            <select id="mode-selector" class="form-control" aria-label="Select drive mode">
+                                <option value="auto">Auto (Nav2)</option>
+                                <option value="manual">Manual</option>
+                            </select>
+                        </div>
+                        <div id="joystick-container" class="joystick-area">
+                            <!-- Canvas for joystick rendering -->
+                            <canvas id="canvas-joystick" class="joystick-canvas" role="img" aria-label="Virtual joystick for manual control"></canvas>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Diagnostics Section -->
+                <section id="section-diagnostics" class="content-section" role="region" aria-labelledby="heading-diagnostics">
+                    <h2 id="heading-diagnostics" class="section-title">Diagnostics</h2>
+                    <div id="diagnostics-content" class="diagnostics-grid">
+                        <!-- System health, sensor status, logs -->
+                    </div>
+                </section>
+                
+                <!-- Settings Section -->
+                <section id="section-settings" class="content-section" role="region" aria-labelledby="heading-settings">
+                    <h2 id="heading-settings" class="section-title">Settings</h2>
+                    <div id="settings-content" class="settings-form">
+                        <!-- Launch controls, configuration -->
+                    </div>
+                </section>
+                
+            </main>
+        </div>
+    </div>
+    
+    <!-- Alert/Toast Container for Accessibility -->
+    <div id="alerts" class="alerts-container" role="status" aria-live="polite" aria-atomic="true"></div>
+    
+    <!-- JavaScript Modules -->
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/state-manager.js"></script>
+    <script src="/static/js/ui-renderer.js"></script>
+    <script src="/static/js/event-handlers.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
